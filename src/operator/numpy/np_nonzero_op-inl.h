@@ -80,7 +80,7 @@ namespace op {
 
 struct NonzeroForwardKernel {
   template<int ndim>
-  __global__ static void Map(int i,
+  MSHADOW_XINLINE static void Map(int i,
                   int64_t* out,
                   const int32_t* idx,
                   const mshadow::Shape<ndim>& shape) {

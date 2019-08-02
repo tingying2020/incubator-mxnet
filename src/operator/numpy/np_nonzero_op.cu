@@ -29,7 +29,7 @@ namespace op {
 
 struct PrefixSumInit{
   template<typename DTypeIn, typename DTypeOut>
-  __global__ static void Map(int i,
+  MSHADOW_XINLINE static void Map(int i,
                   DTypeOut* out,
                   DTypeIn* in) {
     if(in[i]){
@@ -51,6 +51,21 @@ inline void NonzeroForward(const nnvm::NodeAttrs& attrs,
   const NDArray &in = inputs[0];
   const NDArray &out = outputs[0];
   CHECK_LE(in.shape().ndim(), MAXDIM) << "ndim of input cannot larger than " << MAXDIM;
+  // 0-dim
+  if(0 == in.shape().ndim()){
+    MSHADOW_TYPE_SWITCH(in.dtype(), DType, {
+      DType* in_dptr = in.data().dptr<DType>();
+      if(*in_dptr) {
+        mxnet::TShape s(1, 1);
+        const_cast<NDArray &>(out).Init(s);
+        *(out.data().dptr<int64_t>()) = 0;
+      } else {
+        mxnet::TShape s(1, 0);
+        const_cast<NDArray &>(out).Init(s);
+      }
+    });
+    return ;
+  }
   size_t in_size = in.shape().Size();
   int32_t valid_num = 0;
   Stream<gpu>* stream = ctx.get_stream<gpu>();
