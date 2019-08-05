@@ -81,9 +81,9 @@ namespace op {
 struct NonzeroForwardKernel {
   template<int ndim>
   MSHADOW_XINLINE static void Map(int i,
-                  int64_t* out,
-                  const int32_t* idx,
-                  const mshadow::Shape<ndim>& shape) {
+                                  int64_t* out,
+                                  const int32_t* idx,
+                                  const mshadow::Shape<ndim>& shape) {
     int32_t prev = (i == 0) ? 0 : idx[i - 1];
     int32_t curr = idx[i];
     if (prev != curr) {

@@ -96,6 +96,7 @@ NNVM_REGISTER_OP(_npx_nonzero)
   })
 .set_attr<nnvm::FInferType>("FInferType", NonzeroType)
 .set_attr<FComputeEx>("FComputeEx<cpu>", NonzeroForward)
+.set_attr<nnvm::FGradient>("FGradient", MakeZeroGradNodes)
 .add_argument("x", "NDArray-or-Symbol", "The input array.");
 
 } // namespace op

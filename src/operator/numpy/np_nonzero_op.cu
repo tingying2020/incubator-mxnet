@@ -30,8 +30,8 @@ namespace op {
 struct PrefixSumInit{
   template<typename DTypeIn, typename DTypeOut>
   MSHADOW_XINLINE static void Map(int i,
-                  DTypeOut* out,
-                  DTypeIn* in) {
+                                  DTypeOut* out,
+                                  DTypeIn* in) {
     if(in[i]){
     out[i] = DTypeOut(1);
     }
