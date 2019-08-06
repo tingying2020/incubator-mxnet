@@ -18,9 +18,10 @@
  */
 /*!
  * Copyright (c) 2018 by Contributors
- * \file boolean_mask.cc
+ * \file np_nonzero_op.cc
 */
 #include "np_nonzero_op-inl.h"
+#include <thrust/scan.h>
 
 namespace mxnet {
 namespace op {
@@ -37,50 +38,73 @@ bool NonzeroType(const nnvm::NodeAttrs& attrs,
 
 #define MAXDIM 10
 
-inline void NonzeroForward(const nnvm::NodeAttrs& attrs,
-                           const OpContext &ctx,
-                           const std::vector<NDArray> &inputs,
-                           const std::vector<OpReqType> &req,
-                           const std::vector<NDArray> &outputs) {
+bool NonzeroStorageType(const nnvm::NodeAttrs& attrs,
+                        const int dev_mask,
+                        DispatchMode* dispatch_mode,
+                        std::vector<int> *in_attrs,
+                        std::vector<int> *out_attrs) {
+  CHECK_EQ(in_attrs->size(), 1);
+  CHECK_EQ(out_attrs->size(), 1);
+  for (int &attr : *in_attrs) {
+    CHECK_EQ(attr, kDefaultStorage) << "Only default storage is supported";
+  }
+  for (int &attr : *out_attrs) {
+    attr = kDefaultStorage;
+  }
+  *dispatch_mode = DispatchMode::kFComputeEx;
+  return true;
+}
+
+inline void NonzeroForwardCPU(const nnvm::NodeAttrs& attrs,
+                              const OpContext &ctx,
+                              const std::vector<NDArray> &inputs,
+                              const std::vector<OpReqType> &req,
+                              const std::vector<NDArray> &outputs) {
   CHECK_EQ(inputs.size(), 1U);
   CHECK_EQ(outputs.size(), 1U);
   const NDArray &in = inputs[0];
   const NDArray &out = outputs[0];
   CHECK_LE(in.shape().ndim(), MAXDIM) << "ndim of input cannot larger than " << MAXDIM;
   // 0-dim
-  if(0 == in.shape().ndim()){
+  if(0 == in.shape().ndim()) {
     MSHADOW_TYPE_SWITCH(in.dtype(), DType, {
       DType* in_dptr = in.data().dptr<DType>();
       if(*in_dptr) {
-        mxnet::TShape s(1, 1);
+        mxnet::TShape s(2, 1);
         const_cast<NDArray &>(out).Init(s);
         *(out.data().dptr<int64_t>()) = 0;
       } else {
-        mxnet::TShape s(1, 0);
+        mxnet::TShape s(2, 1);
+        s[0] = 0;
         const_cast<NDArray &>(out).Init(s);
       }
     });
     return ;
   }
   size_t in_size = in.shape().Size();
+  // 0-shape
+  if(0 == in_size) {
+    mxnet::TShape s(2, in.shape().ndim());
+    s[0] = 0;
+    const_cast<NDArray &>(out).Init(s);
+    return ;
+  }
   std::vector<int32_t> prefix_sum(in_size, 0);
   size_t valid_num = 0;
+  mshadow::Stream<cpu> *stream = ctx.get_stream<cpu>();
   // Calculate prefix sum
   MSHADOW_TYPE_SWITCH(in.dtype(), DType, {
-    DType* in_dptr = in.data().dptr<DType>();
-    for (size_t i = 0; i < in_size; i++) {
-      prefix_sum[i] = (i == 0) ? 0 : prefix_sum[i - 1];
-      prefix_sum[i] += (in_dptr[i]) ? 1 : 0;
-    }
-    valid_num = prefix_sum[in_size - 1];
+    mxnet_op::Kernel<PrefixSumInit, cpu>::Launch(
+      stream, in_size, prefix_sum.data(), in.data().dptr<DType>());
   });
+  thrust::inclusive_scan(prefix_sum.data(), prefix_sum.data()+in_size, prefix_sum.data());
+  valid_num = prefix_sum[in_size - 1];
   // set the output shape forcefully
   mxnet::TShape s(2, in.shape().ndim());
   s[0] = valid_num;
   const_cast<NDArray &>(out).Init(s);
   // get the shape from the input
   NONZERO_NDIM_SWITCH(in.shape().ndim(), ndim, {
-    mshadow::Stream<cpu> *stream = ctx.get_stream<cpu>();
     mshadow::Shape<ndim> shape = in.shape().get<ndim>();
     mxnet_op::Kernel<NonzeroForwardKernel, cpu>::Launch(
       stream, in_size, out.data().dptr<int64_t>(), prefix_sum.data(), shape);
@@ -95,7 +119,8 @@ NNVM_REGISTER_OP(_npx_nonzero)
 	  return std::vector<std::string>{"x"};
   })
 .set_attr<nnvm::FInferType>("FInferType", NonzeroType)
-.set_attr<FComputeEx>("FComputeEx<cpu>", NonzeroForward)
+.set_attr<FComputeEx>("FComputeEx<cpu>", NonzeroForwardCPU)
+.set_attr<FInferStorageType>("FInferStorageType", NonzeroStorageType)
 .set_attr<nnvm::FGradient>("FGradient", MakeZeroGradNodes)
 .add_argument("x", "NDArray-or-Symbol", "The input array.");
 

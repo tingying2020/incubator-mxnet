@@ -18,7 +18,7 @@
  */
 /*!
  * Copyright (c) 2018 by Contributors
- * \file boolean_mask-inl.h
+ * \file np_nonzero_op-inl.h
 */
 
 #ifndef MXNET_OPERATOR_NUMPY_NP_NONZERO_OP_INL_H_
@@ -39,7 +39,7 @@
 #include "../mshadow_op.h"
 #include "../elemwise_op_common.h"
 
-#define NONZERO_NDIM_SWITCH(NDim, ndim, ...)         \
+#define NONZERO_NDIM_SWITCH(NDim, ndim, ...)       \
   if (NDim == 0) {                                 \
   } else if (NDim == 1) {                          \
     const int ndim = 1;                            \
@@ -77,6 +77,19 @@
 
 namespace mxnet {
 namespace op {
+
+struct PrefixSumInit{
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i,
+                                  int32_t* out,
+                                  DType* in) {
+    if(in[i]){
+      out[i] = 1;
+    } else {
+      out[i] = 0;
+    }
+  }
+};
 
 struct NonzeroForwardKernel {
   template<int ndim>

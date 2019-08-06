@@ -1597,13 +1597,15 @@ def test_np_nonzero():
                     test_nonzero.hybridize()
                 x = rand_ndarray(shape, dtype=oneType).as_np_ndarray()
                 np_out = _np.nonzero(x.asnumpy())
+                np_out = _np.transpose(np_out)
                 mx_out = test_nonzero(x)
                 assert mx_out.shape == np_out.shape
                 assert_almost_equal(mx_out.asnumpy(), np_out, rtol, atol)
 
                 # Test imperative once again
-                mx_out = np.nonzero(x)
+                mx_out = npx.nonzero(x)
                 np_out = _np.nonzero(x.asnumpy())
+                np_out = _np.transpose(np_out)
                 assert_almost_equal(mx_out.asnumpy(), np_out, rtol, atol)
 
 
