@@ -48,6 +48,13 @@ NNVM_REGISTER_OP(_npi_maximum)
 NNVM_REGISTER_OP(_npi_minimum)
 .set_attr<FCompute>("FCompute<gpu>", BinaryBroadcastCompute<gpu, mshadow_op::minimum>);
 
+NNVM_REGISTER_OP(_npi_hypot)
+.set_attr<FCompute>("FCompute<gpu>", BinaryBroadcastCompute<gpu, mshadow_op::hypot>);
+
+NNVM_REGISTER_OP(_backward_npi_hypot)
+.set_attr<FCompute>("FCompute<gpu>", BinaryBroadcastBackwardUseIn<gpu, mshadow_op::hypot_grad_left,
+                    mshadow_op::hypot_grad_right>);
+
 NNVM_REGISTER_OP(_npi_add_scalar)
 .set_attr<FCompute>("FCompute<gpu>", BinaryScalarOp::Compute<gpu, op::mshadow_op::plus>);
 
