@@ -29,11 +29,11 @@ from ..ndarray import NDArray
 
 __all__ = ['zeros', 'ones', 'full', 'add', 'subtract', 'multiply', 'divide', 'mod', 'power', 'sin',
            'cos', 'tan', 'sinh', 'cosh', 'tanh', 'log10', 'sqrt', 'cbrt', 'abs', 'absolute',
-           'exp', 'expm1', 'arcsin', 'arccos', 'arctan', 'sign', 'log', 'degrees', 'log2', 'log1p',
-           'rint', 'radians', 'reciprocal', 'square', 'negative', 'fix', 'ceil', 'floor',
-           'trunc', 'logical_not', 'arcsinh', 'arccosh', 'arctanh', 'tensordot',
-           'linspace', 'expand_dims', 'tile', 'arange', 'split', 'concatenate', 'stack',
-           'maximum', 'minimum', 'swapaxes', 'clip', 'argmax']
+           'exp', 'expm1', 'arcsin', 'arccos', 'arctan', 'sign', 'log', 'degrees', 'rad2deg',
+           'log2', 'log1p', 'rint', 'radians', 'deg2rad','reciprocal', 'square', 'negative',
+           'fix', 'ceil', 'floor', 'trunc', 'logical_not', 'arcsinh', 'arccosh', 'arctanh',
+           'tensordot', 'linspace', 'expand_dims', 'tile', 'arange', 'split', 'concatenate',
+           'stack', 'maximum', 'minimum', 'swapaxes', 'clip', 'argmax']
 
 
 @set_module('mxnet.ndarray.numpy')
@@ -1220,6 +1220,42 @@ def degrees(x, out=None, **kwargs):
 
 
 @set_module('mxnet.ndarray.numpy')
+def rad2deg(x, out=None):
+    r"""
+    rad2deg(x, out=None)
+
+    Convert angles from radians to degrees.
+    Parameters
+    ----------
+    x : ndarray or scalar
+        Angles in degrees.
+    out : ndarray or None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned.
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The corresponding angle in radians.
+        This is a scalar if `x` is a scalar.
+
+    Notes
+    -----
+    "rad2deg(x)" is "x *180 / pi".
+
+    This function differs from the original numpy.arange in the following aspects:
+        - Only support float32 and float64.
+        - `out` must be in the same size of input.
+
+    Examples
+    --------
+    >>> np.rad2deg(np.pi/2)
+    90.0
+    """
+    return _unary_func_helper(x, _npi.rad2deg, _np.rad2deg, out=out)
+
+
+@set_module('mxnet.ndarray.numpy')
 def rint(x, out=None, **kwargs):
     """
     Round elements of the array to the nearest integer.
@@ -1360,6 +1396,42 @@ def radians(x, out=None, **kwargs):
            dtype=float32)
     """
     return _unary_func_helper(x, _npi.radians, _np.radians, out=out, **kwargs)
+
+
+@set_module('mxnet.ndarray.numpy')
+def deg2rad(x, out=None):
+    r"""
+    deg2rad(x, out=None)
+
+    Convert angles from degrees to radians.
+    Parameters
+    ----------
+    x : ndarray or scalar
+        Angles in degrees.
+    out : ndarray or None, optional
+        A location into which the result is stored. If not provided or `None`,
+        a freshly-allocated array is returned.
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The corresponding angle in radians.
+        This is a scalar if `x` is a scalar.
+
+    Notes
+    -----
+    "deg2rad(x)" is "x * pi / 180".
+
+    This function differs from the original numpy.arange in the following aspects:
+        - Only support float32 and float64.
+        - `out` must be in the same size of input.
+
+    Examples
+    --------
+    >>> np.deg2rad(180)
+    3.1415927
+    """
+    return _unary_func_helper(x, _npi.deg2rad, _np.deg2rad, out=out)
 
 
 @set_module('mxnet.ndarray.numpy')
