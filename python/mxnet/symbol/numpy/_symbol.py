@@ -35,7 +35,7 @@ __all__ = ['zeros', 'ones', 'add', 'subtract', 'multiply', 'divide', 'mod', 'rem
            'rint', 'radians', 'reciprocal', 'square', 'negative', 'fix', 'ceil', 'floor',
            'trunc', 'logical_not', 'arcsinh', 'arccosh', 'arctanh', 'tensordot',
            'linspace', 'expand_dims', 'tile', 'arange', 'split', 'concatenate', 'stack', 'mean',
-           'maximum', 'minimum', 'swapaxes', 'clip', 'argmax', 'std', 'var', 'indices']
+           'maximum', 'minimum', 'swapaxes', 'clip', 'argmax', 'std', 'var', 'indices', 'floor_divide']
 
 
 def _num_outputs(sym):
@@ -2746,6 +2746,37 @@ def indices(dimensions, dtype=_np.int32, ctx=None):
     else:
         raise ValueError("The dimensions must be sequence of ints")
 # pylint: enable=redefined-outer-name
+
+
+@set_module('mxnet.symbol.numpy')
+def floor_divide(x1, x2, out=None):
+    r"""
+    floor_divide(x1, x2, out=None)
+
+    Return the largest integer smaller or equal to the division of the inputs.
+    It is equivalent to the Python ``//`` operator and pairs with the
+    Python ``%`` (`remainder`), function so that ``a = a % b + b * (a // b)``
+    up to roundoff.
+
+    Parameters
+    ----------
+    x1 : _Symbol or scalar
+        Numerator.
+    x2 : _Symbol or scalar
+        Denominator.
+    out : _Symbol, None, or tuple of ndarray and None, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the inputs broadcast to. If not provided or `None`,
+        a freshly-allocated array is returned.
+
+    Returns
+    -------
+    y : _Symbol or scalar
+        y = floor(`x1`/`x2`)
+        This is a scalar if both `x1` and `x2` are scalars.
+    """
+    return _ufunc_helper(x1, x2, _npi.floor_divide, _np.floor_divide, _npi.floor_divide_scalar,
+                         _npi.rfloor_divide_scalar, out)
 
 
 _set_np_symbol_class(_Symbol)
